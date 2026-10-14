@@ -1,15 +1,61 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LessonPlayer } from "./lesson-player";
 import { introLesson } from "../data/intro-lesson";
+import { api } from "../lib/api";
+import { validateAnswer } from "../lib/validation";
+import type { Attempt, PublicLesson } from "../lib/types";
+
+vi.mock("../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/api")>();
+  return { ...actual, api: { ...actual.api, start: vi.fn(), answer: vi.fn(), complete: vi.fn(), progress: vi.fn() } };
+});
+
+// Render the same public content shape as the backend: no answer keys.
+const publicLesson: PublicLesson = {
+  ...introLesson,
+  exercises: introLesson.exercises.map(exercise => {
+    const { explanation, ...publicExercise } = exercise;
+    if (publicExercise.type === "multiple-choice") {
+      const { correctOptionId, ...content } = publicExercise;
+      return content;
+    }
+    const { acceptedOrders, ...content } = publicExercise;
+    return content;
+  }),
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  const attempts = new Map<string, { attempt: Attempt; answers: Map<string, boolean> }>();
+  vi.mocked(api.start).mockImplementation(async (_learner, lessonId, originalAttemptId) => {
+    const attempt: Attempt = { id: `attempt-${attempts.size}`, lessonId, originalAttemptId: originalAttemptId ?? null, total: originalAttemptId ? attempts.get(originalAttemptId)!.attempt.missedExerciseIds.length : 5, score: null, completedAt: null, missedExerciseIds: [] };
+    attempts.set(attempt.id, { attempt, answers: new Map() });
+    return attempt;
+  });
+  vi.mocked(api.answer).mockImplementation(async (_learner, attemptId, exerciseId, answer) => {
+    const exercise = introLesson.exercises.find(exercise => exercise.id === exerciseId)!;
+    const correct = validateAnswer(exercise, answer);
+    attempts.get(attemptId)!.answers.set(exerciseId, correct);
+    return { correct, explanation: exercise.explanation, correctOptionId: exercise.type === "multiple-choice" ? exercise.correctOptionId : null };
+  });
+  vi.mocked(api.complete).mockImplementation(async (_learner, attemptId) => {
+    const { attempt, answers } = attempts.get(attemptId)!;
+    attempt.score = [...answers.values()].filter(Boolean).length;
+    attempt.missedExerciseIds = [...answers].filter(([, correct]) => !correct).map(([id]) => id);
+    attempt.completedAt = "2026-10-14T00:00:00Z";
+    return attempt;
+  });
+  vi.mocked(api.progress).mockResolvedValue([]);
+});
 
 afterEach(cleanup);
 
 async function completeLesson(missQuestions = false) {
   const user = userEvent.setup();
-  render(<LessonPlayer lesson={introLesson} />);
+  render(<LessonPlayer lesson={publicLesson} learnerId="learner-test" />);
   await user.click(screen.getByRole("button", { name: /Let’s practice/ }));
   // Miss one question of each type when requested.
   await user.click(screen.getByRole("radio", { name: missQuestions ? /Aabhar/ : /Kem cho/ }));
@@ -35,6 +81,29 @@ async function completeLesson(missQuestions = false) {
 }
 
 describe("missed question review", () => {
+  it("locks an answer after a failed submission and safely retries the same answer", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.answer).mockRejectedValueOnce(new Error("Connection interrupted. Try again."));
+    render(<LessonPlayer lesson={publicLesson} learnerId="learner-test" />);
+    await user.click(screen.getByRole("button", { name: /Let’s practice/ }));
+    await user.click(screen.getByRole("radio", { name: /Kem cho/ }));
+    await user.click(screen.getByRole("button", { name: /Check answer/ }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Connection interrupted");
+    expect(screen.getByRole("radio", { name: /Kem cho/ }).closest("fieldset")?.disabled).toBe(true);
+    await user.click(screen.getByRole("button", { name: /Check answer/ }));
+    expect(await screen.findByText("✓ That’s right!")).toBeTruthy();
+    expect(vi.mocked(api.answer).mock.calls[0]).toEqual(vi.mocked(api.answer).mock.calls[1]);
+  });
+
+  it("can retry a failed completion without losing answers or the original score", async () => {
+    vi.mocked(api.complete).mockRejectedValueOnce(new Error("Could not save completion."));
+    const user = await completeLesson(true);
+    expect((await screen.findByRole("alert")).textContent).toContain("Could not save completion");
+    await user.click(screen.getByRole("button", { name: /Finish lesson/ }));
+    expect(await screen.findByText("Original score: 3 of 5 correct.")).toBeTruthy();
+    expect(api.complete).toHaveBeenCalledTimes(2);
+  });
+
   it("shows the original score and offers no review when every answer is correct", async () => {
     await completeLesson();
     expect(screen.getByText("Original score: 5 of 5 correct.")).toBeTruthy();

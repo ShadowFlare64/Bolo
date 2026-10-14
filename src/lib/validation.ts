@@ -1,5 +1,5 @@
-import type { Answer, Exercise } from "./types";
-export function isAnswerReady(exercise: Exercise, answer: Answer | null): boolean {
+import type { Answer, Exercise, PublicExercise } from "./types";
+export function isAnswerReady(exercise: PublicExercise, answer: Answer | null): boolean {
   if (!answer || exercise.type !== answer.type) return false;
   if (exercise.type === "multiple-choice" && answer.type === "multiple-choice") {
     return exercise.options.some(option => option.id === answer.optionId);

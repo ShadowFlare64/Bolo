@@ -4,3 +4,9 @@ out/
 *.tsbuildinfo
 .env*
 !.env.example
+.tools/
+backend/.venv/
+__pycache__/
+.pytest_cache/
+pytest-cache-files-*/
+*.pyc

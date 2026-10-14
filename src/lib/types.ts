@@ -18,6 +18,8 @@ export type ArrangementExercise = BaseExercise & {
   acceptedOrders: string[][];
 };
 export type Exercise = ChoiceExercise | ArrangementExercise;
+// API content deliberately excludes answer keys and explanations.
+export type PublicExercise = Omit<ChoiceExercise, "correctOptionId" | "explanation"> | Omit<ArrangementExercise, "acceptedOrders" | "explanation">;
 export type Answer = { type: "multiple-choice"; optionId: string } | { type: "sentence-arrangement"; tokenIds: string[] };
 export type Lesson = {
   id: string; title: string; description: string; durationMinutes: number;
@@ -26,3 +28,7 @@ export type Lesson = {
   phrases: LearningText[];
   exercises: Exercise[];
 };
+export type PublicLesson = Omit<Lesson, "exercises"> & { exercises: PublicExercise[] };
+export type AnswerResult = { correct: boolean; explanation: string; correctOptionId: string | null };
+export type Attempt = { id: string; lessonId: string; originalAttemptId: string | null; total: number; score: number | null; completedAt: string | null; missedExerciseIds: string[] };
+export type Progress = { lessonId: string; bestScore: number; total: number; completedCount: number; completedAt: string };

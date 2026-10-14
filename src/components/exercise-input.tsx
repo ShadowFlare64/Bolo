@@ -1,10 +1,10 @@
-import type { Answer, Exercise, ScriptMode } from "../lib/types";
-type Props = { exercise: Exercise; answer: Answer | null; mode: ScriptMode; locked: boolean; feedback: boolean | null; onChange: (answer: Answer) => void };
-export function ExerciseInput({ exercise, answer, mode, locked, feedback, onChange }: Props) {
+import type { Answer, PublicExercise, ScriptMode } from "../lib/types";
+type Props = { exercise: PublicExercise; answer: Answer | null; mode: ScriptMode; locked: boolean; feedback: boolean | null; correctOptionId: string | null; onChange: (answer: Answer) => void };
+export function ExerciseInput({ exercise, answer, mode, locked, feedback, correctOptionId, onChange }: Props) {
   if (exercise.type === "multiple-choice") {
     return <fieldset className="choices" disabled={locked}><legend className="sr-only">Choose an answer</legend>{exercise.options.map((option, index) => {
       const selected = answer?.type === "multiple-choice" && answer.optionId === option.id;
-      const correct = feedback !== null && option.id === exercise.correctOptionId;
+      const correct = feedback !== null && option.id === correctOptionId;
       const incorrect = feedback === false && selected;
       return <label key={option.id} className={`choice ${selected ? "selected" : ""} ${locked ? "locked" : ""} ${correct ? "answer-correct" : ""} ${incorrect ? "answer-incorrect" : ""}`}><input type="radio" name={exercise.id} checked={selected} onChange={() => onChange({ type: "multiple-choice", optionId: option.id })} /><span className="choice-number" aria-hidden>{index + 1}</span><span lang={mode === "gujarati" ? "gu" : undefined}>{option.text[mode]}</span><span className="choice-check" aria-hidden>{correct ? "✓" : incorrect ? "×" : selected ? "●" : "○"}</span>{correct && <span className="sr-only"> — Correct answer</span>}{incorrect && <span className="sr-only"> — Incorrect answer</span>}</label>;
     })}</fieldset>;

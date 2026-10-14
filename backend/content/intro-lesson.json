@@ -1,0 +1,220 @@
+{
+  "id": "first-conversation",
+  "title": "Your first conversation",
+  "durationMinutes": 4,
+  "description": "Ask how someone is, share how you feel, and say thank you.",
+  "reviewStatus": "needs-native-review",
+  "sources": [
+    {
+      "label": "Baraha Gujarati examples",
+      "url": "https://www.baraha.com/help/Keyboards/guj-examples.htm"
+    }
+  ],
+  "phrases": [
+    {
+      "romanized": "Kem cho?",
+      "gujarati": "કેમ છો?",
+      "english": "How are you?"
+    },
+    {
+      "romanized": "Hu majama chhu.",
+      "gujarati": "હું મજામાં છું.",
+      "english": "I am well."
+    },
+    {
+      "romanized": "Aabhar",
+      "gujarati": "આભાર",
+      "english": "Thank you"
+    }
+  ],
+  "exercises": [
+    {
+      "difficulty": "beginner",
+      "concepts": [
+        "greetings"
+      ],
+      "id": "recognize-question",
+      "type": "multiple-choice",
+      "prompt": "How do you ask “How are you?”",
+      "options": [
+        {
+          "id": "thanks",
+          "text": {
+            "romanized": "Aabhar",
+            "gujarati": "આભાર",
+            "english": "Thank you"
+          }
+        },
+        {
+          "id": "how",
+          "text": {
+            "romanized": "Kem cho?",
+            "gujarati": "કેમ છો?",
+            "english": "How are you?"
+          }
+        },
+        {
+          "id": "well",
+          "text": {
+            "romanized": "Hu majama chhu.",
+            "gujarati": "હું મજામાં છું.",
+            "english": "I am well."
+          }
+        }
+      ],
+      "correctOptionId": "how",
+      "explanation": "“Kem cho?” means “How are you?”"
+    },
+    {
+      "difficulty": "beginner",
+      "concepts": [
+        "greetings"
+      ],
+      "id": "recognize-response",
+      "type": "multiple-choice",
+      "prompt": "Someone asks “Kem cho?” Choose “I am well.”",
+      "options": [
+        {
+          "id": "well",
+          "text": {
+            "romanized": "Hu majama chhu.",
+            "gujarati": "હું મજામાં છું.",
+            "english": "I am well."
+          }
+        },
+        {
+          "id": "thanks",
+          "text": {
+            "romanized": "Aabhar",
+            "gujarati": "આભાર",
+            "english": "Thank you"
+          }
+        },
+        {
+          "id": "how",
+          "text": {
+            "romanized": "Kem cho?",
+            "gujarati": "કેમ છો?",
+            "english": "How are you?"
+          }
+        }
+      ],
+      "correctOptionId": "well",
+      "explanation": "“Hu majama chhu” means “I am well.”"
+    },
+    {
+      "difficulty": "beginner",
+      "concepts": [
+        "greetings"
+      ],
+      "id": "build-question",
+      "type": "sentence-arrangement",
+      "prompt": "Build the question: “How are you?”",
+      "tokens": [
+        {
+          "id": "cho",
+          "text": {
+            "romanized": "cho?",
+            "gujarati": "છો?",
+            "english": ""
+          }
+        },
+        {
+          "id": "kem",
+          "text": {
+            "romanized": "Kem",
+            "gujarati": "કેમ",
+            "english": ""
+          }
+        }
+      ],
+      "acceptedOrders": [
+        [
+          "kem",
+          "cho"
+        ]
+      ],
+      "explanation": "The question is “Kem cho?” — “How are you?”"
+    },
+    {
+      "difficulty": "beginner",
+      "concepts": [
+        "greetings"
+      ],
+      "id": "recognize-thanks",
+      "type": "multiple-choice",
+      "prompt": "How do you say “Thank you”?",
+      "options": [
+        {
+          "id": "how",
+          "text": {
+            "romanized": "Kem cho?",
+            "gujarati": "કેમ છો?",
+            "english": "How are you?"
+          }
+        },
+        {
+          "id": "well",
+          "text": {
+            "romanized": "Hu majama chhu.",
+            "gujarati": "હું મજામાં છું.",
+            "english": "I am well."
+          }
+        },
+        {
+          "id": "thanks",
+          "text": {
+            "romanized": "Aabhar",
+            "gujarati": "આભાર",
+            "english": "Thank you"
+          }
+        }
+      ],
+      "correctOptionId": "thanks",
+      "explanation": "“Aabhar” means “Thank you.”"
+    },
+    {
+      "difficulty": "beginner",
+      "concepts": [
+        "greetings"
+      ],
+      "id": "build-response",
+      "type": "sentence-arrangement",
+      "prompt": "Build the response: “I am well.”",
+      "tokens": [
+        {
+          "id": "chhu",
+          "text": {
+            "romanized": "chhu.",
+            "gujarati": "છું.",
+            "english": ""
+          }
+        },
+        {
+          "id": "hu",
+          "text": {
+            "romanized": "Hu",
+            "gujarati": "હું",
+            "english": ""
+          }
+        },
+        {
+          "id": "majama",
+          "text": {
+            "romanized": "majama",
+            "gujarati": "મજામાં",
+            "english": ""
+          }
+        }
+      ],
+      "acceptedOrders": [
+        [
+          "hu",
+          "majama",
+          "chhu"
+        ]
+      ],
+      "explanation": "The response is “Hu majama chhu.” — “I am well.”"
+    }
+  ]
+}

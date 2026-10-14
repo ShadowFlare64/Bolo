@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: bolo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bolo_local}
+      POSTGRES_DB: bolo
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - bolo_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bolo -d bolo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  bolo_postgres:

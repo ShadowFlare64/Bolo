@@ -1,5 +1,7 @@
 # Milestone 1 engineering walkthrough
 
+This is the historical frontend-prototype walkthrough. Milestone 2 now loads content and validates answers through FastAPI and stores completed progress in PostgreSQL. See [the current backend guide](../backend/README.md) for that data flow; the local-only behavior below describes Milestone 1.
+
 ## Why this structure?
 
 Next.js App Router gives us routes and a server-rendered landing page without a separate routing library. Only `LessonPlayer` requires the client boundary because exercises use events and React state. Its imported input component runs on the client as well. We keep content, display, and validation in separate modules so new lesson content does not require copying the player. Tailwind is available for utilities; global CSS defines the reusable visual language. No global state library is needed for one lesson.
