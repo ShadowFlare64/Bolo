@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/dev.mjs",
+    "dev:frontend": "next dev --port 3000",
+    "test:browser": "node scripts/browser-smoke.mjs",
+    "test:dev": "node --test scripts/dev-processes.test.mjs",
+    "build": "node scripts/build.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
@@ -22,8 +25,9 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "jsdom": "^26.1.0",
+    "playwright-core": "^1.64.1",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.9.0",
-    "vitest": "^3.2.0"
+    "vitest": "^4.1.12"
   }
 }

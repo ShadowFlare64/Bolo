@@ -4,6 +4,7 @@ out/
 *.tsbuildinfo
 .env*
 !.env.example
+!.env.portable.example
 .tools/
 backend/.venv/
 __pycache__/

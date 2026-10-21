@@ -6,7 +6,7 @@ After finishing a lesson, **Review Mistakes** appears if you missed any question
 
 ## Run locally
 
-First start PostgreSQL and FastAPI using the [backend setup guide](backend/README.md). This workspace has a project-local PostgreSQL runtime and Python environment prepared. The frontend requires Node.js 20.9 or later and npm. In a separate PowerShell terminal:
+This workspace has PostgreSQL and Python dependencies prepared. Use **one terminal** in the inner `Bolo` folder:
 
 ```powershell
 cd C:\Users\purab\OneDrive\PersonalProjects\Bolo\Bolo
@@ -16,14 +16,21 @@ npm run dev
 
 Open http://localhost:3000. Select **Start Learning** or open http://localhost:3000/learn. Stop the server with Ctrl+C.
 
+`npm run dev` starts the local PostgreSQL server, applies migrations, seeds the lesson without overwriting progress, then starts FastAPI and Next.js. Wait for **Bolo is ready** before opening the page. Ctrl+C stops both app servers; PostgreSQL data is retained. Do not start separate FastAPI/Next.js terminals at the same time. If a port is already occupied, stop the earlier server first.
+
+The launcher owns terminal input. Servers use separate control pipes so PowerShell/Next terminal handling cannot consume each other's stdin. Ctrl+C requests shutdown and waits for both processes; force termination is a logged timeout fallback. Unexpected exits report the server name, PID, exit code, and signal and stop the other server without restarting. Run `npm run test:dev` for process-lifecycle regression tests. If an unexplained exit recurs, retain the `Stopping Bolo:` line and the preceding server output; these distinguish a terminal signal from a child failure.
+
+For a fresh checkout or Docker setup, follow the [backend setup guide](backend/README.md). `npm run dev:frontend` starts only Next.js when you deliberately manage the backend separately. Use Node.js 22.12+ or 24 LTS for the installed development tools.
+
 ```powershell
 npm test
 npm run typecheck
 npm run build
 npm start
+npm run test:browser
 ```
 
-`npm start` serves the production build after `npm run build`. PostgreSQL and FastAPI must be running for lessons. `.env.example` documents the frontend API URL; `backend/.env.example` documents database credentials and CORS settings. Keep actual `.env` files out of Git.
+`npm run build` requires stopping the development server first and safely recreates the generated `.next` cache, including on OneDrive. `npm start` serves that production build; PostgreSQL and FastAPI must be running for lessons. The Chrome browser test requires `npm run dev` running in another terminal and Chrome installed. It checks real answers, review, persistence, and mobile/desktop overflow; screenshots go in `.tools/screenshots/`. `.env.example` and `backend/.env.example` document settings. Keep actual `.env` files out of Git.
 
 ## Folder map
 

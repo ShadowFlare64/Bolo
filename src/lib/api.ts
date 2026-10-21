@@ -6,6 +6,7 @@ const learnerKey = "bolo.learnerId";
 export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message); }
 }
+export class MissingProfileError extends ApiError {}
 
 async function request<T>(path: string, learnerId?: string, body?: unknown): Promise<T> {
   const controller = new AbortController();
@@ -33,9 +34,19 @@ let creatingLearner: Promise<string> | null = null;
 async function ensureLearner(): Promise<string> {
   const existing = localStorage.getItem(learnerKey);
   if (existing) {
-    await request("/learners/me", existing);
+    try { await request("/learners/me", existing); }
+    catch (error) {
+      if (error instanceof ApiError && [404, 422].includes(error.status)) {
+        throw new MissingProfileError("This browser’s saved profile is not available in the current database. Retry if you changed databases, or start a new anonymous profile.", error.status);
+      }
+      throw error;
+    }
     return existing;
   }
+  return createLearner();
+}
+
+function createLearner(): Promise<string> {
   // React development mode may mount twice; share one profile creation request.
   if (!creatingLearner) creatingLearner = request<{ id: string }>("/learners", undefined, {}).then(learner => {
     localStorage.setItem(learnerKey, learner.id);
@@ -46,6 +57,7 @@ async function ensureLearner(): Promise<string> {
 
 export const api = {
   ensureLearner,
+  createNewLearner: createLearner,
   lessons: () => request<{ id: string; title: string; position: number }[]>("/lessons"),
   lesson: (id: string) => request<PublicLesson>(`/lessons/${encodeURIComponent(id)}`),
   progress: (learnerId: string) => request<Progress[]>("/learners/me/progress", learnerId),

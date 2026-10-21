@@ -6,6 +6,8 @@ FastAPI handles HTTP requests; Pydantic validates their shape; SQLAlchemy reads 
 
 Start in the repository root, `C:\Users\purab\OneDrive\PersonalProjects\Bolo\Bolo`.
 
+**For this prepared workspace, just run `npm run dev` from that folder.** It starts the portable database, migrates/seeds it, and runs both application servers. The separate commands below are for first-time installation or managing each service manually; do not run them alongside the all-in-one command. `npm run dev` leaves PostgreSQL running on exit to preserve the local development database; the `-Stop` command below shuts it down when wanted.
+
 ### PostgreSQL: choose one option
 
 **Docker**, when Docker Desktop is installed and running:
@@ -51,7 +53,7 @@ cd backend
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-The venv is already installed here. You do not need to recreate it on every run. Run commands from `backend` so `.env` and `alembic.ini` resolve correctly. Open http://127.0.0.1:8000/docs for interactive API documentation. `/health` checks that the API process is running; it is not a database health check.
+The venv is already installed here. You do not need to recreate it on every run. Backend environment settings resolve from the backend folder regardless of the working directory. Migration paths resolve relative to `alembic.ini`; from the root use `backend/.venv/Scripts/python.exe -m alembic -c backend/alembic.ini upgrade head`. Open http://127.0.0.1:8000/docs for interactive API documentation. `/health` checks the API process; `/ready` checks database connectivity and whether the lesson table has been migrated.
 
 ### Next.js (a separate terminal)
 
@@ -60,7 +62,7 @@ From the repository root:
 ```powershell
 Copy-Item .env.example .env.local
 npm install
-npm run dev
+npm run dev:frontend
 ```
 
 Open http://localhost:3000 and select **Start Learning**. The API URL defaults to `http://127.0.0.1:8000/api`; `NEXT_PUBLIC_API_URL` can override it. Restart Next.js after changing its environment file. CORS allows `http://localhost:3000` and `http://127.0.0.1:3000`; edit `CORS_ORIGINS` in backend settings if you use another origin.
@@ -148,4 +150,4 @@ Optional live-server smoke check (creates a demo learner in the selected develop
 .\.venv\Scripts\python.exe scripts/smoke.py --verify
 ```
 
-No deployment or browser visual testing is included. Milestone 3 requires approval.
+Run `npm run test:browser` with the full application running to check navigation, both exercise types, script switching, scoring, review, refresh persistence, and mobile/desktop overflow in real Chrome. The test creates a separate anonymous learner. If Chrome is unavailable, install it or set `BOLO_BROWSER=msedge` to use an installed Edge browser. No deployment is included. Milestone 3 requires approval.

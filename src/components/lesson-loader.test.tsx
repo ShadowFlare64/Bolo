@@ -2,11 +2,14 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { api } from "../lib/api";
+import { api, MissingProfileError } from "../lib/api";
 import { introLesson } from "../data/intro-lesson";
 import { LessonLoader } from "./lesson-loader";
 
-vi.mock("../lib/api", () => ({ api: { lessons: vi.fn(), ensureLearner: vi.fn(), lesson: vi.fn(), progress: vi.fn() } }));
+vi.mock("../lib/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/api")>();
+  return { ...actual, api: { ...actual.api, lessons: vi.fn(), ensureLearner: vi.fn(), lesson: vi.fn(), progress: vi.fn(), createNewLearner: vi.fn() } };
+});
 afterEach(cleanup);
 beforeEach(() => {
   vi.clearAllMocks();
@@ -32,4 +35,15 @@ it("shows an error and can retry loading", async () => {
   expect((await screen.findByRole("alert")).textContent).toContain("Backend unavailable");
   await userEvent.setup().click(screen.getByRole("button", { name: "Try again" }));
   expect(await screen.findByRole("heading", { name: introLesson.title })).toBeTruthy();
+});
+
+it("offers an explicit recovery action for a missing saved profile", async () => {
+  vi.mocked(api.ensureLearner).mockRejectedValueOnce(new MissingProfileError("Saved profile unavailable", 404));
+  vi.mocked(api.createNewLearner).mockResolvedValue("new-profile");
+  render(<LessonLoader />);
+  await screen.findByRole("alert");
+  expect(api.createNewLearner).not.toHaveBeenCalled();
+  await userEvent.setup().click(screen.getByRole("button", { name: "Start new anonymous profile" }));
+  expect(await screen.findByRole("heading", { name: introLesson.title })).toBeTruthy();
+  expect(api.createNewLearner).toHaveBeenCalledTimes(1);
 });

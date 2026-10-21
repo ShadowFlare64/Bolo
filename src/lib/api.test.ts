@@ -41,4 +41,18 @@ describe("API integration", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
     await expect(api.lessons()).rejects.toThrow("Check that the backend is running");
   });
+
+  it("does not discard an existing profile when creating a replacement fails", async () => {
+    localStorage.setItem("bolo.learnerId", "persistent-id");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    await expect(api.createNewLearner()).rejects.toThrow();
+    expect(localStorage.getItem("bolo.learnerId")).toBe("persistent-id");
+  });
+
+  it("replaces the saved identifier only after explicit creation succeeds", async () => {
+    localStorage.setItem("bolo.learnerId", "old-id");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(json({ id: "new-id" }, 201)));
+    expect(await api.createNewLearner()).toBe("new-id");
+    expect(localStorage.getItem("bolo.learnerId")).toBe("new-id");
+  });
 });
