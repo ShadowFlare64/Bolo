@@ -9,6 +9,9 @@ import { DevProcesses } from "./dev-processes.mjs";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const backend = path.join(root, "backend");
 const python = path.join(backend, ".venv", process.platform === "win32" ? "Scripts/python.exe" : "bin/python");
+// The Windows venv's console redirector can open a new console for its real
+// interpreter. pythonw uses the same venv and our pipes without a console.
+const serverPython = process.platform === "win32" ? path.join(backend, ".venv", "Scripts/pythonw.exe") : python;
 const children = new Set();
 let stopping = false;
 let finish;
@@ -69,6 +72,7 @@ async function waitFor(url, timeout = 90000) {
 
 try {
   if (!existsSync(python)) throw new Error("Python environment missing. Follow backend/README.md to create backend/.venv and install requirements-lock.txt.");
+  if (!existsSync(serverPython)) throw new Error("Python development interpreter missing. Recreate backend/.venv with a standard Python installation (including pythonw.exe on Windows).");
   if (!existsSync(path.join(root, "node_modules/next/dist/bin/next"))) throw new Error("Frontend dependencies missing. Run npm install first.");
   await requireFreePort(3000);
   await requireFreePort(8000);
@@ -87,7 +91,7 @@ try {
   await run(python, ["-m", "alembic", "upgrade", "head"], { cwd: backend });
   await run(python, ["-m", "app.seed"], { cwd: backend });
   console.log("\nStarting FastAPI…");
-  servers.start("FastAPI", python, ["-m", "app.dev_server"], { cwd: backend });
+  servers.start("FastAPI", serverPython, ["-m", "app.dev_server"], { cwd: backend });
   await waitFor("http://127.0.0.1:8000/ready");
   console.log("\nStarting Next.js…");
   if (stopping) throw new Error("Startup cancelled");

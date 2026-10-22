@@ -33,8 +33,18 @@ async function answerExercise(exercise, correct, script = "romanized") {
 }
 try {
   await page.goto("http://localhost:3000", { waitUntil: "networkidle" });
+  assert.equal(await page.locator("main > section").count(), 3, "Homepage should have three purposeful sections");
+  await page.locator(".home-photo img").evaluate(image => image.decode());
+  assert(await page.locator(".home-photo img").evaluate(image => image.naturalWidth > 0), "Hero photograph must load");
   await noOverflow();
   await page.screenshot({ path: fileURLToPath(new URL("landing-desktop.png", screenshotDir)), fullPage: true });
+  const preview = page.getByRole("region", { name: "Example of the Bolo lesson interface" });
+  if (await preview.count()) {
+    await preview.getByRole("button", { name: "ગુજરાતી", exact: true }).click();
+    await preview.getByText("કેમ છો?", { exact: true }).waitFor();
+    await preview.getByRole("button", { name: "Romanized", exact: true }).click();
+  }
+  for (const width of [320, 768, 1280]) { await page.setViewportSize({ width, height: 900 }); await noOverflow(); }
   await page.getByRole("link", { name: /Start Learning/ }).first().click();
   await page.getByRole("heading", { name: lesson.title }).waitFor();
   await page.getByRole("button", { name: /Let’s practice/ }).click();
@@ -45,6 +55,8 @@ try {
     await page.getByRole("button", { name: index === 4 ? /Finish lesson/ : /Continue/ }).click();
   }
   await page.getByText("Original score: 3 of 5 correct.", { exact: true }).waitFor();
+  await page.waitForFunction(() => document.activeElement?.tagName === "H1");
+  await page.screenshot({ path: fileURLToPath(new URL("completion-desktop.png", screenshotDir)), fullPage: true, animations: "disabled" });
   await page.getByRole("button", { name: "Review Mistakes", exact: true }).click();
   for (const [index, exercise] of [lesson.exercises[0], lesson.exercises[2]].entries()) {
     await answerExercise(exercise, true);
@@ -66,6 +78,15 @@ try {
   await page.getByRole("link", { name: /Start Learning/ }).first().waitFor();
   await noOverflow();
   await page.screenshot({ path: fileURLToPath(new URL("landing-mobile.png", screenshotDir)), fullPage: true });
+  const menu = page.locator(".mobile-nav");
+  if (await menu.count()) {
+    await menu.locator("summary").click();
+    await menu.getByRole("link", { name: "Your first lesson" }).click();
+    assert.equal(await menu.getAttribute("open"), null, "Mobile menu should close after navigation");
+    await menu.locator("summary").click();
+    await page.keyboard.press("Escape");
+    assert.equal(await menu.getAttribute("open"), null, "Escape should close mobile navigation");
+  }
   // A stale/malformed ID must not trap the learner on an unrecoverable error.
   await page.evaluate(() => localStorage.setItem("bolo.learnerId", "missing-browser-profile"));
   await page.goto("http://localhost:3000/learn");

@@ -129,8 +129,63 @@ export function LessonPlayer({ lesson, learnerId, progress: initialProgress }: P
     setError("");
   }
   const progress = complete ? 100 : Math.round(index / exercises.length * 100);
-  return <div className="learn-page"><header className="site-header shell"><Link className="brand" href="/">bolo<span lang="gu">બોલો</span></Link><Link className="exit-link" href="/">Exit lesson <span aria-hidden>×</span></Link></header><main className="learn-shell"><div className="lesson-meta"><span className="eyebrow">{reviewing ? "BEGINNER · REVIEW" : "BEGINNER · LESSON 01"}</span><span className="quiet">{complete ? "Complete" : started ? `${index + 1} of ${exercises.length} exercises` : "About 4 minutes"}</span></div><div className="progress-track" role="progressbar" aria-label="Lesson progress" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div style={{ width: `${progress}%` }} /></div>
-    <div aria-live="polite">{savedProgress && <p className="quiet">Saved progress: completed {savedProgress.completedCount} {savedProgress.completedCount === 1 ? "time" : "times"} · Best score {savedProgress.bestScore}/{savedProgress.total}</p>}</div>{error && <p className="feedback incorrect" role="alert">{error}</p>}<div className="learn-toolbar"><span className="quiet">{lesson.title}</span><div className="script-toggle" role="group" aria-label="Display script"><button aria-pressed={mode === "romanized"} onClick={() => setMode("romanized")}>Romanized</button><button aria-pressed={mode === "gujarati"} onClick={() => setMode("gujarati")}><span lang="gu">ગુજરાતી</span></button></div></div>
-    {complete ? <section className="exercise-panel completion"><div className="completion-symbol" aria-hidden>✳</div><p className="eyebrow">A SMALL STEP WORTH TAKING</p><h1 ref={heading} tabIndex={-1}>{reviewing ? "Review complete." : <>Your first conversation,<br /><em>in the books.</em></>}</h1><p>Original score: {score} of {lesson.exercises.length} correct.</p><p>{missedExerciseIds.length} missed {missedExerciseIds.length === 1 ? "question" : "questions"} on your original attempt.</p>{reviewing && <p>You revisited all {exercises.length} missed {exercises.length === 1 ? "question" : "questions"}. Your original score stays unchanged.</p>}<div className="result-stat"><strong>{Math.round(score / lesson.exercises.length * 100)}%</strong><span>original lesson accuracy</span></div><p className="quiet">Your completed lesson progress is saved in this browser’s anonymous profile.</p><div className="completion-actions">{!reviewing && missedExerciseIds.length > 0 && <button className="button" disabled={busy} onClick={startReview}>Review Mistakes</button>}<button className="button secondary" disabled={busy} onClick={restart}>Restart full lesson ↻</button><Link className="button secondary" href="/">Back to home</Link></div></section> : !started ? <section className="exercise-panel"><p className="eyebrow">FIRST, MEET YOUR NEW PHRASES</p><h1 ref={heading} tabIndex={-1}>{lesson.title}</h1><p className="panel-description">{lesson.description} Take a look at these phrases before you practice.</p><div className="phrase-list">{lesson.phrases.map(phrase => <div key={phrase.romanized}><strong lang={mode === "gujarati" ? "gu" : undefined}>{phrase[mode]}</strong><span>{phrase.english}</span></div>)}</div><button className="button w-full" disabled={busy} onClick={startLesson}>Let’s practice <span aria-hidden>→</span></button></section> : <section className="exercise-panel"><p className="eyebrow">{exercise.type === "multiple-choice" ? "CHOOSE THE RIGHT PHRASE" : "PUT THE WORDS TOGETHER"}</p><h1 ref={heading} tabIndex={-1}>{exercise.prompt}</h1><p className="panel-description">{exercise.type === "multiple-choice" ? "Choose one answer below." : "Build your sentence using the words below."}</p><ExerciseInput key={exercise.id} exercise={exercise} answer={answer} mode={mode} locked={feedback !== null || busy || submittedAnswer !== null} feedback={feedback} correctOptionId={correctOptionId} onChange={setAnswer} /><div className="feedback-slot" role="status" aria-live="polite">{busy && <p className="quiet">Saving your progress…</p>}{feedback !== null && <div className={`feedback ${feedback ? "correct" : "incorrect"}`}><strong>{feedback ? "✓ That’s right!" : "Keep going — here’s the phrase."}</strong><p>{explanation}</p></div>}</div>{feedback === null ? <button className="button w-full" disabled={busy || !isAnswerReady(exercise, answer)} onClick={check}>Check answer <span aria-hidden>→</span></button> : <button className="button w-full" disabled={busy} onClick={advance}>{index === exercises.length - 1 ? (reviewing ? "Finish review" : "Finish lesson") : "Continue"} <span aria-hidden>→</span></button>}</section>}
-    <aside className="review-note"><span aria-hidden>◇</span><p>Learning content is a draft awaiting native-speaker review. <a href={lesson.sources[0].url} target="_blank" rel="noreferrer">Phrase reference ↗</a></p></aside></main><footer className="learn-footer">A little practice. A little closer.</footer></div>;
+  return <div className="learn-page">
+    <a className="skip-link" href="#lesson-content">Skip to lesson</a>
+    <header className="site-header shell">
+      <Link className="brand" href="/">bolo<span lang="gu">બોલો</span></Link>
+      <span className="header-context">Gujarati <span aria-hidden>/</span> Beginner course</span>
+      <Link className="exit-link" href="/">Exit lesson <span aria-hidden>×</span></Link>
+    </header>
+    <main className="learn-shell" id="lesson-content">
+      <div className="lesson-meta">
+        <span className="eyebrow">{reviewing ? "BEGINNER · REVIEW" : "BEGINNER · LESSON 01"}</span>
+        <span className="quiet">{complete ? "Complete" : started ? `${index + 1} of ${exercises.length} exercises` : "About 4 minutes"}</span>
+      </div>
+      <div className="progress-track" role="progressbar" aria-label="Lesson progress" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><div style={{ width: `${progress}%` }} /></div>
+      <div aria-live="polite">{savedProgress && <p className="quiet saved-progress">Saved progress: completed {savedProgress.completedCount} {savedProgress.completedCount === 1 ? "time" : "times"} · Best score {savedProgress.bestScore}/{savedProgress.total}</p>}</div>
+      {error && <p className="feedback incorrect" role="alert">{error}</p>}
+      <div className="learn-toolbar">
+        <span className="quiet">{lesson.title}</span>
+        <div className="script-toggle" role="group" aria-label="Display script">
+          <button aria-pressed={mode === "romanized"} onClick={() => setMode("romanized")}>Romanized</button>
+          <button aria-pressed={mode === "gujarati"} onClick={() => setMode("gujarati")}><span lang="gu">ગુજરાતી</span></button>
+        </div>
+      </div>
+      {complete ? <section className="exercise-panel completion">
+        <div className="completion-symbol" aria-hidden>✓</div>
+        <p className="eyebrow">{reviewing ? "REVIEW COMPLETED" : "LESSON COMPLETED"}</p>
+        <h1 ref={heading} tabIndex={-1}>{reviewing ? "Review complete." : <>Your first conversation,<br /><em>in the books.</em></>}</h1>
+        <p>Original score: {score} of {lesson.exercises.length} correct.</p>
+        <p>{missedExerciseIds.length} missed {missedExerciseIds.length === 1 ? "question" : "questions"} on your original attempt.</p>
+        {reviewing && <p>You revisited all {exercises.length} missed {exercises.length === 1 ? "question" : "questions"}. Your original score stays unchanged.</p>}
+        <div className="result-stat"><strong>{Math.round(score / lesson.exercises.length * 100)}%</strong><span>original lesson accuracy</span></div>
+        <p className="quiet">Your completed lesson progress is saved in this browser’s anonymous profile.</p>
+        <div className="completion-actions">
+          {!reviewing && missedExerciseIds.length > 0 && <button className="button" disabled={busy} onClick={startReview}>Review Mistakes</button>}
+          <button className="button secondary" disabled={busy} onClick={restart}>Restart full lesson ↻</button>
+          <Link className="button secondary" href="/">Back to home</Link>
+        </div>
+      </section> : !started ? <section className="exercise-panel">
+        <p className="eyebrow">FIRST, MEET YOUR NEW PHRASES</p>
+        <h1 ref={heading} tabIndex={-1}>{lesson.title}</h1>
+        <p className="panel-description">{lesson.description} Take a look at these phrases before you practice.</p>
+        <div className="phrase-list">{lesson.phrases.map(phrase => <div key={phrase.romanized}><strong lang={mode === "gujarati" ? "gu" : undefined}>{phrase[mode]}</strong><span>{phrase.english}</span></div>)}</div>
+        <button className="button w-full" disabled={busy} onClick={startLesson}>Let’s practice <span aria-hidden>→</span></button>
+      </section> : <section className="exercise-panel">
+        <p className="eyebrow">{exercise.type === "multiple-choice" ? "CHOOSE THE RIGHT PHRASE" : "PUT THE WORDS TOGETHER"}</p>
+        <h1 ref={heading} tabIndex={-1}>{exercise.prompt}</h1>
+        <p className="panel-description">{exercise.type === "multiple-choice" ? "Choose one answer below." : "Build your sentence using the words below."}</p>
+        <ExerciseInput key={exercise.id} exercise={exercise} answer={answer} mode={mode} locked={feedback !== null || busy || submittedAnswer !== null} feedback={feedback} correctOptionId={correctOptionId} onChange={setAnswer} />
+        <div className="feedback-slot" role="status" aria-live="polite">
+          {busy && <p className="quiet">Saving your progress…</p>}
+          {feedback !== null && <div className={`feedback ${feedback ? "correct" : "incorrect"}`}><strong>{feedback ? "✓ That’s right!" : "Keep going — here’s the phrase."}</strong><p>{explanation}</p></div>}
+        </div>
+        {feedback === null
+          ? <button className="button w-full" disabled={busy || !isAnswerReady(exercise, answer)} onClick={check}>Check answer <span aria-hidden>→</span></button>
+          : <button className="button w-full" disabled={busy} onClick={advance}>{index === exercises.length - 1 ? (reviewing ? "Finish review" : "Finish lesson") : "Continue"} <span aria-hidden>→</span></button>}
+      </section>}
+      <aside className="review-note"><p>Learning content is a draft awaiting native-speaker review. <a href={lesson.sources[0].url} target="_blank" rel="noreferrer">Phrase reference ↗</a></p></aside>
+    </main>
+    <footer className="learn-footer">Gujarati for everyday connection.</footer>
+  </div>;
 }

@@ -1,6 +1,16 @@
 // Run the standard Next CLI with an explicit parent-owned shutdown channel.
 // Do not forward terminal stdin; interactive prompts are not the supervisor.
 const path = require("node:path");
+// Next's CLI forks a second Node process. Its spawn options do not inherit
+// windowsHide from DevProcesses, so hide that console at the fork boundary too.
+if (process.platform === "win32") {
+  const childProcess = require("node:child_process");
+  const fork = childProcess.fork;
+  childProcess.fork = function (modulePath, args, options) {
+    if (!Array.isArray(args)) { options = args ?? options; args = []; }
+    return fork(modulePath, args, { ...options, windowsHide: true });
+  };
+}
 let stopping = false;
 function stop() {
   if (stopping) return;
