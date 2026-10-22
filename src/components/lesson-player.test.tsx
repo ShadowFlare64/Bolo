@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LessonPlayer } from "./lesson-player";
 import { introLesson } from "../data/intro-lesson";
@@ -52,6 +52,19 @@ beforeEach(() => {
 });
 
 afterEach(cleanup);
+
+it("advances only one question when Continue is clicked repeatedly before rendering", async () => {
+  const user = userEvent.setup();
+  render(<LessonPlayer lesson={publicLesson} learnerId="learner-test" />);
+  await user.click(screen.getByRole("button", { name: /Let’s practice/ }));
+  await user.click(screen.getByRole("radio", { name: /Kem cho/ }));
+  await user.click(screen.getByRole("button", { name: /Check answer/ }));
+  const next = screen.getByRole("button", { name: /Continue/ });
+  act(() => { next.click(); next.click(); next.click(); });
+  expect(screen.getByRole("heading", { name: introLesson.exercises[1].prompt })).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Check answer/ }).hasAttribute("disabled")).toBe(true);
+  expect(api.answer).toHaveBeenCalledTimes(1);
+});
 
 async function completeLesson(missQuestions = false) {
   const user = userEvent.setup();

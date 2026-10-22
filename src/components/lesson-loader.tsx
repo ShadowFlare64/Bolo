@@ -25,7 +25,7 @@ export function LessonLoader() {
     setMissingProfile(false);
     async function load() {
       const [lessons, learnerId] = await Promise.all([api.lessons(), api.ensureLearner()]);
-      if (!lessons.length) throw new Error("No lessons are available yet. Run the backend seed script.");
+      if (!lessons.length) throw new Error("No lessons are available yet. Please try again later.");
       const [lesson, progress] = await Promise.all([api.lesson(lessons[0].id), api.progress(learnerId)]);
       if (!lesson.exercises.length) throw new Error("This lesson has no exercises yet.");
       if (active) setLoaded({ lesson, learnerId, progress: progress.find(item => item.lessonId === lesson.id) });
@@ -34,5 +34,25 @@ export function LessonLoader() {
     return () => { active = false; };
   }, [retry]);
   if (loaded) return <LessonPlayer {...loaded} />;
-  return <div className="learn-page"><header className="site-header shell"><Link className="brand" href="/">bolo<span lang="gu">બોલો</span></Link><Link className="exit-link" href="/">Back to home</Link></header><main className="learn-shell"><section className="exercise-panel"><h1>{error ? "Let’s try that again." : "Getting your lesson ready…"}</h1>{error ? <><p className="panel-description" role="alert">{error}</p><div className="completion-actions"><button className="button" disabled={creatingProfile} onClick={() => setRetry(value => value + 1)}>Try again</button>{missingProfile && <button className="button secondary" disabled={creatingProfile} onClick={newProfile}>Start new anonymous profile</button>}</div></> : <p className="panel-description" role="status">Loading your phrases and saved progress.</p>}</section></main></div>;
+  return <div className="learn-page">
+    <a className="skip-link" href="#lesson-content">Skip to lesson</a>
+    <header className="site-header shell">
+      <Link className="brand" href="/" aria-label="Bolo home">bolo<span lang="gu">બોલો</span></Link>
+      <Link className="exit-link" href="/">Back to home <span aria-hidden>×</span></Link>
+    </header>
+    <main className="learn-shell" id="lesson-content">
+      <section className="exercise-panel status-panel" aria-busy={!error}>
+        <p className="eyebrow">YOUR FIRST CONVERSATION</p>
+        <h1>{error ? "Let’s try that again." : "Getting your lesson ready…"}</h1>
+        {error ? <>
+          <p className="panel-description" role="alert">{error}</p>
+          <div className="completion-actions">
+            <button className="button" disabled={creatingProfile} onClick={() => setRetry(value => value + 1)}>Try again</button>
+            {missingProfile && <button className="button secondary" disabled={creatingProfile} onClick={newProfile}>Start new anonymous profile</button>}
+          </div>
+        </> : <p className="panel-description" role="status">Loading your phrases and saved progress.</p>}
+      </section>
+    </main>
+    <footer className="learn-footer">Gujarati for everyday connection.</footer>
+  </div>;
 }

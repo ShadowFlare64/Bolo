@@ -5,6 +5,7 @@ import type { Answer, PublicLesson, Progress, ScriptMode } from "../lib/types";
 import { isAnswerReady } from "../lib/validation";
 import { api, ApiError } from "../lib/api";
 import { ExerciseInput } from "./exercise-input";
+import { ScriptText } from "./script-text";
 
 type Props = { lesson: PublicLesson; learnerId: string; progress?: Progress };
 export function LessonPlayer({ lesson, learnerId, progress: initialProgress }: Props) {
@@ -28,8 +29,12 @@ export function LessonPlayer({ lesson, learnerId, progress: initialProgress }: P
   // answer, since the server may have recorded it before the response was lost.
   const [submittedAnswer, setSubmittedAnswer] = useState<Answer | null>(null);
   const busyRef = useRef(false);
+  const advancing = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { heading.current?.focus(); }, [index, started, complete, reviewing]);
+  useEffect(() => {
+    advancing.current = false;
+    heading.current?.focus();
+  }, [index, started, complete, reviewing]);
 
   const exercises = reviewing
     ? lesson.exercises.filter(exercise => missedExerciseIds.includes(exercise.id))
@@ -85,8 +90,11 @@ export function LessonPlayer({ lesson, learnerId, progress: initialProgress }: P
   }
 
   function advance() {
-    if (feedback === null || !attemptId) return;
+    if (feedback === null || !attemptId || busyRef.current || advancing.current) return;
     if (index < exercises.length - 1) {
+      // Lock synchronously until the next question commits. A burst of clicks
+      // can otherwise reuse this question's feedback before React renders.
+      advancing.current = true;
       setIndex(value => value + 1);
       clearQuestion();
     } else {
@@ -129,10 +137,10 @@ export function LessonPlayer({ lesson, learnerId, progress: initialProgress }: P
     setError("");
   }
   const progress = complete ? 100 : Math.round(index / exercises.length * 100);
-  return <div className="learn-page">
+  return <div className="learn-page" data-review={reviewing || undefined}>
     <a className="skip-link" href="#lesson-content">Skip to lesson</a>
     <header className="site-header shell">
-      <Link className="brand" href="/">bolo<span lang="gu">બોલો</span></Link>
+      <Link className="brand" href="/" aria-label="Bolo home">bolo<span lang="gu">બોલો</span></Link>
       <span className="header-context">Gujarati <span aria-hidden>/</span> Beginner course</span>
       <Link className="exit-link" href="/">Exit lesson <span aria-hidden>×</span></Link>
     </header>
@@ -151,7 +159,8 @@ export function LessonPlayer({ lesson, learnerId, progress: initialProgress }: P
           <button aria-pressed={mode === "gujarati"} onClick={() => setMode("gujarati")}><span lang="gu">ગુજરાતી</span></button>
         </div>
       </div>
-      {complete ? <section className="exercise-panel completion">
+      {reviewing && !complete && <p className="review-context">Mistake review · Original score: {score}/{lesson.exercises.length}</p>}
+      {complete ? <section className="exercise-panel completion" key={reviewing ? "review-complete" : "lesson-complete"}>
         <div className="completion-symbol" aria-hidden>✓</div>
         <p className="eyebrow">{reviewing ? "REVIEW COMPLETED" : "LESSON COMPLETED"}</p>
         <h1 ref={heading} tabIndex={-1}>{reviewing ? "Review complete." : <>Your first conversation,<br /><em>in the books.</em></>}</h1>
@@ -165,13 +174,13 @@ export function LessonPlayer({ lesson, learnerId, progress: initialProgress }: P
           <button className="button secondary" disabled={busy} onClick={restart}>Restart full lesson ↻</button>
           <Link className="button secondary" href="/">Back to home</Link>
         </div>
-      </section> : !started ? <section className="exercise-panel">
+      </section> : !started ? <section className="exercise-panel" key="introduction">
         <p className="eyebrow">FIRST, MEET YOUR NEW PHRASES</p>
         <h1 ref={heading} tabIndex={-1}>{lesson.title}</h1>
         <p className="panel-description">{lesson.description} Take a look at these phrases before you practice.</p>
-        <div className="phrase-list">{lesson.phrases.map(phrase => <div key={phrase.romanized}><strong lang={mode === "gujarati" ? "gu" : undefined}>{phrase[mode]}</strong><span>{phrase.english}</span></div>)}</div>
+        <div className="phrase-list">{lesson.phrases.map(phrase => <div key={phrase.romanized}><strong><ScriptText text={phrase} mode={mode} /></strong><span>{phrase.english}</span></div>)}</div>
         <button className="button w-full" disabled={busy} onClick={startLesson}>Let’s practice <span aria-hidden>→</span></button>
-      </section> : <section className="exercise-panel">
+      </section> : <section className="exercise-panel" key={`${reviewing ? "review" : "lesson"}-${exercise.id}`}>
         <p className="eyebrow">{exercise.type === "multiple-choice" ? "CHOOSE THE RIGHT PHRASE" : "PUT THE WORDS TOGETHER"}</p>
         <h1 ref={heading} tabIndex={-1}>{exercise.prompt}</h1>
         <p className="panel-description">{exercise.type === "multiple-choice" ? "Choose one answer below." : "Build your sentence using the words below."}</p>
